@@ -16,7 +16,15 @@ export async function createLogEntry(entry) {
     },
     body: JSON.stringify(entry),
   });
-  const json = await response.json();
+  let json;
+  if (response.headers.get('content-type').includes('text/html')) {
+    const message = await response.text();
+    json = {
+      message,
+    };
+  } else {
+    json = await response.json();
+  }
   if (response.ok) {
     return json;
   }

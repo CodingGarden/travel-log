@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
+import { useQueryParam, StringParam } from 'use-query-params';
 
 import { listLogEntries } from './API';
 import LogEntryForm from './LogEntryForm';
 
 const App = () => {
+  const [token, setToken] = useQueryParam('token', StringParam);  
   const [logEntries, setLogEntries] = useState([]);
   const [showPopup, setShowPopup] = useState({});
   const [addEntryLocation, setAddEntryLocation] = useState(null);
@@ -22,6 +24,16 @@ const App = () => {
   };
 
   useEffect(() => {
+    if(token === undefined){
+      console.log("Token not defined")
+    }
+    else {
+      window.localStorage.setItem("jwt", token); // Save token to localStorage
+      setToken(''); // Remove token from URL
+    }    
+  }, [token, setToken]);
+
+  useEffect(() => {    
     getEntries();
   }, []);
 

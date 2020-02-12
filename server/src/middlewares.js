@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
@@ -14,7 +16,15 @@ const errorHandler = (error, req, res, next) => {
   });
 };
 
+const generateToken = (req, res, next) => {  
+  req.token = jwt.sign({
+    id: req.user.id,
+  }, process.env.API_KEY);
+  next();
+}
+
 module.exports = {
   notFound,
   errorHandler,
+  generateToken,
 };

@@ -5,14 +5,14 @@ export async function listLogEntries() {
   return response.json();
 }
 
-export async function createLogEntry(entry) {
-  const apiKey = entry.apiKey;
+export async function createLogEntry(entry) {  
+  const token = window.localStorage.getItem("jwt");
   delete entry.apiKey;
   const response = await fetch(`${API_URL}/api/logs`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'X-API-KEY': apiKey, 
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(entry),
   });

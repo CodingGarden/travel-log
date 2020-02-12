@@ -12,6 +12,8 @@ const keys = require("./config");
 const middlewares = require('./middlewares');
 const logs = require('./api/logs');
 
+const User = require("./models/User");
+
 const app = express();
 
 app.use(passport.initialize());
@@ -30,7 +32,21 @@ passport.use(new GitHubStrategy({
   callbackURL: "/auth/github/callback"
 },
   function (accessToken, refreshToken, profile, done) {
-    done(null, profile)
+    User.findOne({ userId: profile.id })
+      .then((existingUser) => {
+        if (existingUser) {
+          done(null, existingUser)
+        } else {
+          new User({
+            userId: profile.id,
+            username: profile.username,
+            picture: profile.photos[0].value
+          }).save()
+            .then((user) => {
+              done(null, user)
+            })
+        }
+      })
   }
 ));
 
@@ -61,7 +77,7 @@ app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/login' }),
   middlewares.generateToken,
   function (req, res) {
-    res.redirect("http://localhost:3000?token=" + req.token);      
+    res.redirect(`${process.env.CORS_ORIGIN}/?token=${req.token}`); // App URL
   });
 
 app.use('/api/logs', logs);

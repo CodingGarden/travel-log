@@ -14,7 +14,7 @@ const {
 
 const router = Router();
 
-const rateLimitDelay = 1 * 1000; // 10 second delay
+const rateLimitDelay = 10 * 1000; // 10 second delay
 const limiter = new RateLimit({
   store: new MongoStore({
     uri: DATABASE_URL,
@@ -33,7 +33,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', checkToken, async (req, res, next) => {  
+router.post('/', limiter, checkToken, async (req, res, next) => {  
   try {    
     req.body.user = req.decoded.id;
     const user = await User.findById(req.decoded.id);

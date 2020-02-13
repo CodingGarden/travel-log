@@ -4,10 +4,12 @@ import { useQueryParam, StringParam } from 'use-query-params';
 
 import { listLogEntries } from './API';
 import LogEntryForm from './LogEntryForm';
+import verify from './jwtCheck';
 
 const App = () => {
   const [token, setToken] = useQueryParam('token', StringParam);  
   const [logEntries, setLogEntries] = useState([]);
+  const [auth, setAuth] = useState(false);
   const [showPopup, setShowPopup] = useState({});
   const [addEntryLocation, setAddEntryLocation] = useState(null);
   const [viewport, setViewport] = useState({
@@ -24,16 +26,27 @@ const App = () => {
   };
 
   useEffect(() => {
-    if(token === undefined){
-      console.log("Token not defined")
-    }
-    else {
+    if(token !== undefined){      
       window.localStorage.setItem("jwt", token); // Save token to localStorage
       setToken(''); // Remove token from URL
     }    
   }, [token, setToken]);
 
-  useEffect(() => {    
+  useEffect(() => {
+    const localToken = window.localStorage.getItem("jwt");    
+    if(localToken === null){
+      setAuth(false);
+    } else {
+      verify(localToken, 
+        (decoded) => {        
+          setAuth(true);
+        }, 
+        (error) => {
+          console.log(error);
+          window.localStorage.removeItem("jwt");
+          setAuth(false);
+        })
+    }    
     getEntries();
   }, []);
 
@@ -142,7 +155,7 @@ const App = () => {
               <LogEntryForm onClose={() => {
                 setAddEntryLocation(null);
                 getEntries();
-              }} location={addEntryLocation} />
+              }} location={addEntryLocation} auth={auth}/>
             </div>
           </Popup>
           </>

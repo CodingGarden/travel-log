@@ -1,4 +1,4 @@
-const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:1337' : 'https://travel-log-api.now.sh';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export async function listLogEntries() {
   const response = await fetch(`${API_URL}/api/logs`);
@@ -6,8 +6,7 @@ export async function listLogEntries() {
 }
 
 export async function createLogEntry(entry) {  
-  const token = window.localStorage.getItem("jwt");
-  delete entry.apiKey;
+  const token = window.localStorage.getItem("jwt");  
   const response = await fetch(`${API_URL}/api/logs`, {
     method: 'POST',
     headers: {

@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
+import { useQueryParam, StringParam } from 'use-query-params';
 
 import { listLogEntries } from './API';
 import LogEntryForm from './LogEntryForm';
+import verify from './jwtCheck';
 
 const App = () => {
+  const [token, setToken] = useQueryParam('token', StringParam);  
   const [logEntries, setLogEntries] = useState([]);
+  const [auth, setAuth] = useState(false);
+  const [userId, setUserId] = useState(null);
   const [showPopup, setShowPopup] = useState({});
   const [addEntryLocation, setAddEntryLocation] = useState(null);
   const [viewport, setViewport] = useState({
@@ -16,13 +21,36 @@ const App = () => {
     zoom: 3
   });
 
-  const getEntries = async () => {
-    const logEntries = await listLogEntries();
+  const getEntries = async (id) => {
+    const logEntries = await listLogEntries(id);
     setLogEntries(logEntries);
   };
 
   useEffect(() => {
-    getEntries();
+    if(token !== undefined){      
+      window.localStorage.setItem("jwt", token); // Save token to localStorage
+      setToken(''); // Remove token from URL
+    }    
+  }, [token, setToken]);
+
+  useEffect(() => {
+    const localToken = window.localStorage.getItem("jwt");    
+    if(localToken === null){
+      setAuth(false);
+      getEntries(null);
+    } else {
+      verify(localToken, 
+        (decoded) => {
+          setAuth(true);
+          setUserId(decoded.id);
+          getEntries(decoded.id);
+        }, 
+        (error) => {
+          console.log(error);
+          window.localStorage.removeItem("jwt");
+          setAuth(false);
+        })
+    }        
   }, []);
 
   const showAddMarkerPopup = (event) => {
@@ -55,7 +83,7 @@ const App = () => {
                 })}
               >
                 <svg
-                  className="marker yellow"
+                  className={`marker ${entry.visibility === 'public' ? 'blue' : 'yellow'}`}
                   style={{
                     height: `${6 * viewport.zoom}px`,
                     width: `${6 * viewport.zoom}px`,
@@ -85,6 +113,8 @@ const App = () => {
                     <h3>{entry.title}</h3>
                     <p>{entry.comments}</p>
                     <small>Visited on: {new Date(entry.visitDate).toLocaleDateString()}</small>
+                    <br/>
+                    <small>Created by: <a href={`https://github.com/${entry.user.username}`}>{entry.user.username}</a></small>
                     {entry.image && <img src={entry.image} alt={entry.title} />}
                   </div>
                 </Popup>
@@ -129,8 +159,8 @@ const App = () => {
             <div className="popup">
               <LogEntryForm onClose={() => {
                 setAddEntryLocation(null);
-                getEntries();
-              }} location={addEntryLocation} />
+                getEntries(userId);
+              }} location={addEntryLocation} auth={auth}/>
             </div>
           </Popup>
           </>

@@ -1,7 +1,13 @@
 const API_URL = process.env.REACT_APP_API_URL;
 
-export async function listLogEntries() {
-  const response = await fetch(`${API_URL}/api/logs`);
+export async function listLogEntries(id) {
+  let response;
+  if(id === null){
+    response = await fetch(`${API_URL}/api/logs`);
+  }
+  else {
+    response = await fetch(`${API_URL}/api/logs/${id}`);
+  }
   return response.json();
 }
 

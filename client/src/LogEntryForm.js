@@ -49,6 +49,11 @@ const LogEntryForm = ({ location, onClose, auth }) => {
       <input name="image" ref={register} />
       <label htmlFor="visitDate">Visit Date</label>
       <input name="visitDate" type="date" required ref={register} />
+      <label htmlFor="visibility">Visibility</label>
+      <select name="visibility" ref={register}>
+        <option value="private" selected>Private</option>
+        <option value="public">Public</option>
+      </select>
       <button disabled={loading}>{loading ? 'Loading...' : 'Create Entry'}</button>
     </form>
     )
